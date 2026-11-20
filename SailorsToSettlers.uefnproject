@@ -1,0 +1,65 @@
+{
+	"fileVersion": 15,
+	"title": "SailorsToSettlers",
+	"description": "",
+	"keyArt": "Resources/Icon128.png",
+	"docsUrl": "",
+	"apiAccess": "Private",
+	"bindings":
+	{
+		"projectId": "60feca53-9cc4-4ad4-9ba9-e7b33546a4de",
+		"modules":
+		{
+			"dd86ab9e-1e1e-4beb-8b88-a87ef8ff8f6c": "dd86ab9e-1e1e-4beb-8b88-a87ef8ff8f6c"
+		},
+		"bSuppressAutomaticVersePathAssignment": false,
+		"projectVersePath": ""
+	},
+	"compatibilityVersion": "43.10",
+	"requiredRedirectorStartingVersion": "43.10.60458657",
+	"editorPermissions": [],
+	"epicApp": "",
+	"sortPriority": 0,
+	"featureSet": "",
+	"plugins": [
+		{
+			"name": "dd86ab9e-1e1e-4beb-8b88-a87ef8ff8f6c",
+			"bIsRoot": true,
+			"bIsPublic": false
+		}
+	],
+	"dataSets":
+	{
+		"matchmaking":
+		{
+			"maxPlayers": 16,
+			"maxTeamCount": 16,
+			"maxTeamSize": 16,
+			"maxSocialPartySize": 16,
+			"allowJoinInProgress": true,
+			"allowSquadFillOption": false,
+			"islandQueuePrivacy": "Public",
+			"minPlayers": 1,
+			"overtimePlayerTarget": 1,
+			"queueMainDuration": 0,
+			"queueOvertimeDuration": 0,
+			"useSkillBasedMatchmaking": false,
+			"ratingType": "",
+			"splitscreenDisabled": false,
+			"version": 1
+		},
+		"experimental":
+		{
+			"DefaultPawn":
+			{
+				"bUseDefaultCharacter": true
+			},
+			"sceneGraph":
+			{
+				"bIsSceneGraphSystemAllowed": true,
+				"bEnableOneFilePerEntity": false
+			},
+			"version": 1
+		}
+	}
+}
