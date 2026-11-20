@@ -1,0 +1,25 @@
+# Ignore everything by default
+*
+
+# Allow directories so Git can traverse into subfolders
+!*/
+
+# Track Verse scripts
+!*.verse
+
+# Track UEFN project metadata & configs
+!*.uefnproject
+!Config/
+!Config/**
+
+# Track Claude Code instructions, skills, and MCP setup
+!CLAUDE.md
+!.claude/
+!.claude/**
+!.mcp.json
+
+# Track Git configuration itself
+!.gitignore
+
+# Explicitly exclude local Claude session caches or secrets if created
+.claude/settings.local.json
