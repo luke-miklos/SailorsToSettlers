@@ -22,6 +22,12 @@ game_config<public> := module:
     # Tier 3 and above are ranged weapons and can damage the boss ship.
     FirstRangedWeaponTier<public>:int = 3
 
+    # --- Harvesting and landing bonus ---
+    # Units gained per completed gather (the button hold time sets the pace).
+    HarvestYield<public>:int = 1
+    # A landing bonus adds one extra unit every Nth gather of that job (2 = 1.5x).
+    LandingBonusEveryNth<public>:int = 2
+
     # --- AI budget (from the P2 crowd-load test, see PLAN.md) ---
     # UEFN allows at most 90 active AI on an island (guards, creatures, wildlife, tamed pets).
     # Plan for about 50 alive at once; recheck with 12 players in M8.

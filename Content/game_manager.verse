@@ -44,6 +44,16 @@ game_manager := class(creative_device):
     @editable
     EndGame : end_game_device = end_game_device{}
 
+    # The four coastal zones. Docking inside one gives that job's landing bonus.
+    @editable
+    WaterZone : landing_zone = landing_zone{}
+    @editable
+    WoodZone : landing_zone = landing_zone{}
+    @editable
+    FoodZone : landing_zone = landing_zone{}
+    @editable
+    PetsZone : landing_zone = landing_zone{}
+
     # --- Test settings (leave at defaults for real play) ---
     # Multiplies every phase length. 0.1 runs a whole game in a few minutes.
     @editable
@@ -63,6 +73,8 @@ game_manager := class(creative_device):
     var Dead : [player]logic = map{}
     var Hud : [player]text_block = map{}
     var EliminationSubs : [player]cancelable = map{}
+    var LandingBonus : [player]resource_kind = map{}
+    var BonusGatherCount : [player]int = map{}
 
     AllDeadEvent : event() = event(){}
 
@@ -78,6 +90,7 @@ game_manager := class(creative_device):
         Stockpile.ChangedEvent.Subscribe(UpdateHud)
 
         RunIntro()
+        AssignLandingBonuses()
 
         for (R := 1..game_config.TotalRounds):
             set CurrentRound = R
@@ -241,6 +254,54 @@ game_manager := class(creative_device):
         for (Player : Players):
             Fleet.IsDocked[Player]
 
+    # --- Landing bonus and harvesting ---
+
+    # Gives each player the job of the zone their boat docked in. Players placed ashore
+    # by the deadline, or who docked outside every zone, get no bonus.
+    AssignLandingBonuses():void =
+        for (Player : GetPlayspace().GetPlayers()):
+            if (Position := Fleet.GetDockPosition[Player]):
+                if (Zone := ZoneAt[Position], set LandingBonus[Player] = Zone.GetKind()):
+                    Log("landing bonus: {KindName(Zone.GetKind())} (docked at {Position.X}, {Position.Y})")
+                else:
+                    Log("landing bonus: none (docked outside every zone at {Position.X}, {Position.Y})")
+            else:
+                Log("landing bonus: none (placed ashore by the deadline)")
+        UpdateHud()
+
+    ZoneAt(Position:vector3)<transacts><decides>:landing_zone =
+        var Found : ?landing_zone = false
+        for (Zone : array{WaterZone, WoodZone, FoodZone, PetsZone}, not Found?, Zone.Contains[Position]):
+            set Found = option{Zone}
+        Found?
+
+    # Called by harvest nodes. Gathering only counts during Prepare and for living players.
+    # Returns how many units were added to the stockpile (0 if the gather didn't count).
+    Harvest<public>(Agent:agent, Kind:resource_kind):int =
+        if (Player := player[Agent], Phase = game_phase.Prepare, not IsDead[Player]):
+            var Amount : int = game_config.HarvestYield
+            if (LandingBonus[Player] = Kind):
+                var Count : int = 0
+                if (Previous := BonusGatherCount[Player]):
+                    set Count = Previous
+                set Count += 1
+                if (set BonusGatherCount[Player] = Count) {}
+                if (Mod[Count, game_config.LandingBonusEveryNth] = 0):
+                    set Amount += 1
+            Stockpile.Add(Kind, Amount)
+            Log("harvest: +{Amount} {KindName(Kind)}, stockpile now {Stockpile.Get(Kind)}")
+            Amount
+        else:
+            Log("harvest: {KindName(Kind)} ignored in {PhaseTitle(Phase)}")
+            0
+
+    KindName(Kind:resource_kind)<computes>:string =
+        case (Kind):
+            resource_kind.Water => "Water"
+            resource_kind.Wood => "Wood"
+            resource_kind.Food => "Food"
+            resource_kind.Pets => "Pets"
+
     # --- Test data ---
 
     AddFakeResources(Tick:int):void =
@@ -282,6 +343,8 @@ game_manager := class(creative_device):
         Resources := Stockpile.Summary()
         for (Player -> Text : Hud):
             var Lines : string = "{Header}\n{Resources}"
+            if (Bonus := LandingBonus[Player]):
+                set Lines += "\nLanding bonus: {KindName(Bonus)} gathering x1.5"
             if (IsDead[Player]):
                 set Lines += "\nYou are down. Spectating until next round."
             Text.SetText(HudMessage(Lines))

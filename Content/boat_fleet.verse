@@ -3,6 +3,7 @@ using { /Fortnite.com/Vehicles }
 using { /Fortnite.com/Characters }
 using { /Verse.org/Simulation }
 using { /UnrealEngine.com/Temporary/Diagnostics }
+using { /UnrealEngine.com/Temporary/SpatialMath }
 
 # Gives every player their own boat at sea and reports when each one docks.
 # Player N (in join order) gets Boats[N]. Boats nobody uses stay disabled, so a
@@ -52,11 +53,20 @@ boat_fleet := class(creative_device):
     @editable
     CheckIntervalSeconds : float = 0.25
 
+    # Touching ground within this distance of any boat spawner doesn't count as docking.
+    @editable
+    IgnoreGroundNearSpawnerMeters : float = 30.0
+
     # Signaled once per player, the moment their boat touches land.
     PlayerDockedEvent<public> : event(player) = event(player){}
 
     var UsedBoats : [int]logic = map{}
     var Docked : [player]logic = map{}
+    # Where each boat touched land. Players placed ashore by the deadline have no entry.
+    var DockPositions : [player]vector3 = map{}
+
+    GetDockPosition<public>(Player:player)<transacts><decides>:vector3 =
+        DockPositions[Player]
 
     # Succeeds if this player's boat has touched land (or they were placed ashore).
     IsDocked<public>(Player:player)<transacts><decides>:void =
@@ -104,10 +114,10 @@ boat_fleet := class(creative_device):
                     BoatPosition := Boat.GetTransform().Translation
                     DX := BoatPosition.X - Start.X
                     DY := BoatPosition.Y - Start.Y
-                    Distance := DX * DX + DY * DY
-                    if (BestIndex < 0 or Distance < BestDistance):
+                    DistanceSq := DX * DX + DY * DY
+                    if (BestIndex < 0 or DistanceSq < BestDistance):
                         set BestIndex = Index
-                        set BestDistance = Distance
+                        set BestDistance = DistanceSq
                 set Index += 1
             if (Boat := GetBoats()[BestIndex], set UsedBoats[BestIndex] = true):
                 Print("boat_fleet: player appeared at ({Start.X}, {Start.Y}), assigning nearest boat {BestIndex}")
@@ -127,12 +137,26 @@ boat_fleet := class(creative_device):
             Sleep(CheckIntervalSeconds)
             if (IsDocked[Player]):
                 break
-            if (Vehicle.IsOnGround[], Vehicle.GetOccupants().Length > 0):
+            if (Vehicle.IsOnGround[], Vehicle.GetOccupants().Length > 0, not NearAnySpawner[Vehicle.GetTransform().Translation]):
                 MarkDocked(Player)
                 Position := Vehicle.GetTransform().Translation
+                if (set DockPositions[Player] = Position) {}
                 Print("boat_fleet: boat {Index} DOCKED at ({Position.X}, {Position.Y}, {Position.Z})")
                 PlayerDockedEvent.Signal(Player)
                 break
+
+    # Boat spawner pads keep collision after their boat is removed, so bumping one at the
+    # start line looks like "on ground". Touching ground that close to a spawner isn't a dock.
+    NearAnySpawner(Position:vector3)<transacts><decides>:void =
+        Limit := IgnoreGroundNearSpawnerMeters * 100.0
+        var Found : logic = false
+        for (Boat : GetBoats()):
+            Pad := Boat.GetTransform().Translation
+            DX := Pad.X - Position.X
+            DY := Pad.Y - Position.Y
+            if (DX * DX + DY * DY <= Limit * Limit):
+                set Found = true
+        Found?
 
     WaitForVehicle(Boat:vehicle_spawner_boat_device, Index:int)<suspends>:fort_vehicle =
         var Waited : float = 0.0
