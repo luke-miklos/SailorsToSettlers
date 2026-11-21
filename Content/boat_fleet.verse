@@ -55,7 +55,17 @@ boat_fleet := class(creative_device):
     # Signaled once per player, the moment their boat touches land.
     PlayerDockedEvent<public> : event(player) = event(player){}
 
-    var NextBoat : int = 0
+    var UsedBoats : [int]logic = map{}
+    var Docked : [player]logic = map{}
+
+    # Succeeds if this player's boat has touched land (or they were placed ashore).
+    IsDocked<public>(Player:player)<transacts><decides>:void =
+        Docked[Player]?
+
+    # For players placed ashore by the docking deadline: counts them as docked
+    # and stops watching their boat.
+    MarkDocked<public>(Player:player):void =
+        if (set Docked[Player] = true) {}
 
     GetBoats()<transacts>:[]vehicle_spawner_boat_device =
         array{Boat1, Boat2, Boat3, Boat4, Boat5, Boat6, Boat7, Boat8, Boat9, Boat10, Boat11, Boat12}
@@ -69,19 +79,41 @@ boat_fleet := class(creative_device):
         Sleep(5.0)
         var Index : int = 0
         for (Boat : GetBoats()):
-            if (Index >= NextBoat):
+            if (not UsedBoats[Index]?):
                 Boat.DestroyVehicle()
             set Index += 1
 
     OnPlayerAdded(Player:player):void =
-        if (Boat := GetBoats()[NextBoat]):
-            Index := NextBoat
-            set NextBoat += 1
-            Print("boat_fleet: assigning boat {Index} to a player")
-            spawn:
-                SailAndDock(Player, Boat, Index)
-        else:
-            Print("boat_fleet: no free boat for a new player")
+        spawn:
+            AssignNearestBoat(Player)
+
+    # The island picks a random spawn pad (one above each boat), so wait until the player
+    # has appeared and give them the free boat nearest to where they are.
+    AssignNearestBoat(Player:player)<suspends>:void =
+        loop:
+            if (Player.IsActive[], Player.GetFortCharacter[]):
+                break
+            Sleep(0.25)
+        if (Character := Player.GetFortCharacter[]):
+            Start := Character.GetTransform().Translation
+            var BestIndex : int = -1
+            var BestDistance : float = 0.0
+            var Index : int = 0
+            for (Boat : GetBoats()):
+                if (not UsedBoats[Index]?):
+                    BoatPosition := Boat.GetTransform().Translation
+                    DX := BoatPosition.X - Start.X
+                    DY := BoatPosition.Y - Start.Y
+                    Distance := DX * DX + DY * DY
+                    if (BestIndex < 0 or Distance < BestDistance):
+                        set BestIndex = Index
+                        set BestDistance = Distance
+                set Index += 1
+            if (Boat := GetBoats()[BestIndex], set UsedBoats[BestIndex] = true):
+                Print("boat_fleet: player appeared at ({Start.X}, {Start.Y}), assigning nearest boat {BestIndex}")
+                SailAndDock(Player, Boat, BestIndex)
+            else:
+                Print("boat_fleet: no free boat for a new player")
 
     SailAndDock(Player:player, Boat:vehicle_spawner_boat_device, Index:int)<suspends>:void =
         Boat.Enable()
@@ -89,22 +121,16 @@ boat_fleet := class(creative_device):
         if (not Boat.Vehicle?):
             Boat.RespawnVehicle()
         Vehicle := WaitForVehicle(Boat, Index)
-        # Wait for the player to have a character, then seat them in the driver's seat.
-        loop:
-            if (Player.IsActive[]):
-                break
-            Sleep(0.25)
-        if (Character := Player.GetFortCharacter[]):
-            Start := Character.GetTransform().Translation
-            Print("boat_fleet: player {Index} first appeared at ({Start.X}, {Start.Y}, {Start.Z})")
-        Sleep(1.0)
         Boat.AssignDriver(Player)
-        Print("boat_fleet: player {Index} seated in boat {Index}")
+        Print("boat_fleet: player seated in boat {Index}")
         loop:
             Sleep(CheckIntervalSeconds)
+            if (IsDocked[Player]):
+                break
             if (Vehicle.IsOnGround[], Vehicle.GetOccupants().Length > 0):
+                MarkDocked(Player)
                 Position := Vehicle.GetTransform().Translation
-                Print("boat_fleet: player {Index} DOCKED at ({Position.X}, {Position.Y}, {Position.Z}) in meters")
+                Print("boat_fleet: boat {Index} DOCKED at ({Position.X}, {Position.Y}, {Position.Z})")
                 PlayerDockedEvent.Signal(Player)
                 break
 
