@@ -132,10 +132,10 @@ Decided (also in the README):
 - Prepare and defend phases are 2 minutes each, and the round 10 final battle is 4 minutes (all raised on 2026-11-20 from 1, 1 and 3 minutes; the docking deadline from 1 to 2).
 - One coastal zone per job (water, wood, food, pets), with a landing bonus.
 - Pets are shared and never die. There are 8 bonuses, one species each. Donating a pet to an NPC reduces the crew's pet count.
-- 5 weapon tiers. The wood cost doubles each tier, and tier 3 and above are ranged weapons.
-- Phases are timer-only.
+- 5 weapon tiers. The wood cost doubles each tier. Tier 1 is the Infinity Blade and tier 2 and above are ranged weapons (changed 2026-11-21; everyone also starts with a pickaxe).
+- Phases are timer-only, except that a defend phase ends early once every landed pirate is dead (added 2026-11-21).
 - 8 NPCs wander the island and are present before players dock.
-- Round 10: a boss ship that only ranged weapons (tier 3+) can damage, plus a large pirate boss that toggles between the lowest-health player and the highest-damage player.
+- Round 10: a boss ship that only ranged weapons (tier 2+) can damage, plus a large pirate boss that toggles between the lowest-health player and the highest-damage player.
 
 Also decided: re-tinted wolf, boar and chicken fill the three remaining pet bonuses (assignment confirmed). Weapons never reset. The pirate boss toggles targeting every 15 seconds, and the final battle lasts 4 minutes. Surviving it wins the game and the bosses die when the timer ends.
 
