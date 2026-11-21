@@ -40,5 +40,29 @@ game_config<public> := module:
     # Pirates alive at once = TargetMaxAliveAI - NpcCount - MaxCrewPets.
     MaxAlivePirates<public>:int = 30
 
+    # --- Communal fire ---
+    FireMaxHeat<public>:float = 100.0
+    FireStartHeat<public>:float = 50.0
+    # One feed spends this much crew wood and adds this much heat.
+    FireWoodPerFeed<public>:int = 5
+    FireHeatPerFeed<public>:float = 10.0
+    # Heat lost per second during Prepare and Defend (0.15 is about 36 per 4-minute round).
+    FireCoolPerSecond<public>:float = 0.15
+    # At each round start: the dead revive if heat is at least this...
+    FireReviveHeat<public>:float = 50.0
+    # ...and the crew has nightmares (lower max health) if heat is below this.
+    FireNightmareBelowHeat<public>:float = 25.0
+    NormalMaxHealth<public>:float = 100.0
+    NightmareMaxHealth<public>:float = 70.0
+
+    # --- Pirate waves ---
+    # Pirates per defend phase = base + per player (who joined) + per round after the first,
+    # capped at MaxAlivePirates.
+    PirateBase<public>:int = 2
+    PiratesPerPlayer<public>:int = 1
+    PiratesPerRound<public>:int = 1
+    # Seconds between pirate spawns while a wave lands.
+    PirateSpawnIntervalSeconds<public>:float = 0.5
+
     # --- Pirate boss ---
     BossTargetToggleSeconds<public>:float = 15.0
