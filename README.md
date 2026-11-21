@@ -21,19 +21,19 @@ The game moves forward for all players together.
 | Phase | Player role | Length | Focus |
 |---|---|---|---|
 | 1. Castaways (intro) | Sailors | until docked | Sail your own boat (simple, easy controls) and explore to find a place to dock. The moment your boat touches land you are **docked** and your intro is over. Your landing spot gives you an advantage in one core job (for example landing near a spring helps with water). |
-| 2. Settlers (prepare) | Settlers | 1 minute | Scavenge the shore, find and harvest water, harvest wood and make fire, turn local fauna into food or pets, find local flora for food, craft stronger weapons (takes wood). |
-| 3. Defenders (defend) | Defenders | 1 minute | Defend the island from pirates! Pirates land in groups from boats and attack like zombies. More boats come in each successive defend phase. Any pirates still alive when the minute ends are removed. |
+| 2. Settlers (prepare) | Settlers | 2 minutes | Scavenge the shore, find and harvest water, harvest wood and make fire, turn local fauna into food or pets, find local flora for food, craft stronger weapons (takes wood). |
+| 3. Defenders (defend) | Defenders | 2 minutes | Defend the island from pirates! Pirates land in groups from boats and attack like zombies. More boats come in each successive defend phase. Any pirates still alive when the phase ends are removed. |
 
-Phases 2 and 3 repeat 10 times with increasing difficulty and higher stakes. Phases are timer-only: each ends when its timer runs out, and nothing can end a phase early. The 1-minute timers are a starting point to tune. Players who haven't docked 1 minute after the voyage begins are automatically placed at a landing spot.
+Phases 2 and 3 repeat 10 times with increasing difficulty and higher stakes. Phases are timer-only: each ends when its timer runs out, and nothing can end a phase early. The 2-minute timers (raised from 1 minute after the first playtests) are a starting point to tune. Players who haven't docked 2 minutes after the voyage begins are automatically placed at a landing spot.
 
 ### Wood economy (agreed starting values, to tune in playtests)
 
 - A player with no bonuses harvests about **30 wood per minute**. Landing in the wood zone and the wood-harvesting pet raise this (suggested +25% to +50% each).
-- Weapon tier costs double: **10, 20, 40, 80, 160 wood** for tiers 1 to 5. Reaching tier 5 costs 310 wood in total, which is about 10 minutes of harvesting with no bonuses, or essentially all 10 prepare phases.
-- Tier 3 (70 wood in total) takes about 2.3 minutes of harvesting, and tier 4 (150 wood) takes 5 minutes. That leaves room for fire, which also needs wood.
+- Weapon tier costs roughly double: **16, 32, 64, 128, 260 wood** for tiers 1 to 5. Reaching tier 5 costs 500 wood in total, which is about 17 minutes of harvesting with no bonuses, out of the 20 minutes of prepare time in a game (10 phases of 2 minutes).
+- Tier 3 (112 wood in total) takes about 3.7 minutes of harvesting, and tier 4 (240 wood) takes 8 minutes. That leaves room for fire, which also needs wood.
 
 ### Ending
-- **Win:** survive round 10. The final attack includes a boss ship that the crew must fire at, plus a large pirate boss who lands on the island with the final wave. The round 10 battle lasts 3 minutes, longer than the normal 1-minute defend phase. If the crew survives the 3 minutes, they win, and the boss and boss ship die when the timer ends, just as ordinary pirates do.
+- **Win:** survive round 10. The final attack includes a boss ship that the crew must fire at, plus a large pirate boss who lands on the island with the final wave. The round 10 battle lasts 4 minutes, longer than the normal 2-minute defend phase. If the crew survives the 4 minutes, they win, and the boss and boss ship die when the timer ends, just as ordinary pirates do.
 - **Lose:** every player dies at the same time. This is an instant game over.
 
 ## Core loop
@@ -86,7 +86,7 @@ Pet donation (Dolly) uses one of the crew's tamed pets, so it competes with the 
 ## Round 10 boss
 
 - **Boss ship:** sits offshore. Only players with a ranged weapon (tier 3 or above) can damage it.
-- **Pirate boss:** a large pirate who lands with the final wave. It switches between two targeting modes every 15 seconds: the player with the lowest health, and the player who has dealt the most damage. The battle lasts 3 minutes, and surviving it wins the game.
+- **Pirate boss:** a large pirate who lands with the final wave. It switches between two targeting modes every 15 seconds: the player with the lowest health, and the player who has dealt the most damage. The battle lasts 4 minutes, and surviving it wins the game.
 
 ## Death, difficulty and growth
 
@@ -109,17 +109,17 @@ Pet donation (Dolly) uses one of the crew's tamed pets, so it competes with the 
 - Roles or classes: none
 - NPCs: the 8 listed below, two per resource (one communal-level, one donation). Fire is not an NPC want
 - Pet re-tints: green-brown boar (wood), gold chicken (cheaper taming), steel-grey wolf (cheaper weapon crafting)
-- Wood economy: 30 wood per minute base harvest, and weapon tiers cost 10, 20, 40, 80, 160
+- Wood economy: 30 wood per minute base harvest, and weapon tiers cost 16, 32, 64, 128, 260 (500 in total for tier 5)
 - Combat: PvE only, with pirates landing from boats during every defend phase
 - Phases: timer-only, with no early ending
 - Players who haven't docked by a deadline are auto-placed at a landing spot
-- Docking deadline: 1 minute
+- Docking deadline: 2 minutes
 - Landing zones: one coastal zone per job (water, wood, food, pets), and landing in a zone boosts that job
 - Pets: shared by the crew, one species per bonus (8 bonuses), and they never die. Donating a pet to an NPC reduces the crew's pet count (and so lowers the taming cost)
 - Weapons: 5 tiers, crafted with wood. The cost doubles each tier. Tier 3 and above are ranged. Weapons never reset between rounds
 - NPCs wander the island and are present before the first player docks
 - Boss ship: damaged only by ranged weapons (tier 3+)
-- Pirate boss: toggles between attacking the lowest-health player and the highest-damage player every 15 seconds. The final battle lasts 3 minutes, and surviving it wins the game
+- Pirate boss: toggles between attacking the lowest-health player and the highest-damage player every 15 seconds. The final battle lasts 4 minutes, and surviving it wins the game
 - Round 10: a boss ship the crew must fire at, plus a large pirate boss who lands with the final wave
 
 ## Open questions

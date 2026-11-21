@@ -29,6 +29,11 @@ Draft for review. See [README.md](README.md) for the design. This plan turns it 
 
 - **M2 (in progress, branch `lbm/m2_spine`):** `game_manager.verse` is the state machine (Intro, then Prepare / Defend / Result for each of the 10 rounds, then Victory; GameOver from any timed phase). `resource_stockpile.verse` is the single owner of water, wood, food and pets (pets capped at `MaxCrewPets`), and there is a text HUD for each player. Intro waits for every player to dock or for the deadline, then teleports stragglers to a landing-spot teleporter. Dead players are tracked from `fort_character.EliminatedEvent`, and everyone dead at once is an instant game over. The dead are revived with `agent.Respawn` at the start of the next prepare phase (unconditionally for now; M4 ties it to the fire). Test settings on the device: `TimeScale` (currently 0.1 in the level), `FakeHarvest` (currently on) and `SimulateWipeAtRound`. Island settings changed to Spawn Limit 1 (spectate after death), manual respawn off, and eliminated players keep their items. Tested on 2026-11-20: the win path ran all 10 rounds with an 18 s final defend (3 min at 0.1x) and ended in Victory, after which the end-game device ended the match. The loss path (simulated wipe in round 3) ended in Game Over at once. The docking deadline teleport worked. `boat_fleet` now gives each player the free boat nearest the spawn pad they landed on (the island picks pads at random), verified with boat 9. Not yet tested: whether the HUD shows correctly. Real-death test on 2026-11-20 (4 hostile pirates, solo): the elimination was detected in round 1's defend phase, but with Spawn Limit 1 Fortnite itself ends the match the moment the last player is out (game state goes back to CanStart). So solo, the revive can't be tested, and a real full wipe ends the match before our Game Over screen. **Decision: keep real spectating (Spawn Limit 1).** Test the revive with 2+ testers, and accept that a full wipe ends the match without our end screen for now (revisit in M7 for the final tallies).
 
+- **M2: done** for everything one person can test (HUD confirmed by the tester). The revive needs 2+ testers.
+- **M3 (in progress, branch `lbm/m3_island`):** four `landing_zone` devices with a 50 m radius: Wood on the north headland shore (41000, 11500), Food on the north-east beach (10000, 40000), Water on the east coast (-12000, 34500) near the large lake, and Pets on the west coast (24000, -40000). There are 12 `harvest_node`s (4 each for wood, water and food). Each is a button with a 2 s hold, which is about 30 per minute, and rests 3 s after use. Gathering only counts during Prepare for living players and goes straight to the stockpile. The landing bonus is 1.5x (+1 every 2nd gather of your job), given from the dock position; players placed ashore by the deadline get none. The boats and their spawn pads were moved from x = 43000 to x = 53000 (deep water, about 100 m out), because the old start line was only about 20 m from the headland. Fixed false docks: an unused boat spawner's pad keeps its collision, so touching "ground" within 30 m of any spawner is ignored. Button devices have their pivot at mid-height (128 cm above the base), so they're now placed at the highest nearby ground + 128 cm. Tested on 2026-11-20: a real dock on the headland gave the Wood bonus, wood rose 1, 3, 4, 6, and gathering in Defend gave nothing. Food also verified: docked at (10044, 41607), got the Food bonus, food rose 1, 3. Water verified by the tester too. **M3 done:** all three gathering zones work (dock, right bonus, gather into the shared stockpile). The pets zone exists but has no nodes until M5.
+
+- **M4 (in progress, branch `lbm/m4_slice`):** `communal_fire.verse` (heat 0 to 100, starts at 50; a feed spends 5 crew wood for +10 heat; cools 0.15 per second in Prepare and Defend). At each round start the fire revives last round's dead if heat >= 50, and gives nightmares (max health 70 for the round) if heat < 25. `camp_station.verse` is a camp button that either feeds the fire or upgrades the user's weapon, which spends the next tier's cost from the crew wood and calls `GrantItemIndex(tier)` on one item granter. Pirate waves: two shore guard spawners (team 2, disabled outside Defend) land `2 + 1 per player + 1 per round` pirates, capped at 30, and any still alive are removed when Defend ends. The HUD adds the fire heat, the pirate forecast (in Prepare) or pirates ashore (in Defend), the weapon tier and next cost, and a nightmare warning. Level: camp at the landing beach (folder `Game/M4_Camp`) with a Campfire device as the visual (lit while heat > 0, its own healing set to 0), and pirate spawners at (38600, 16000) and (38600, 20500). Granter set to Keep All (it defaulted to Clear Inventory). Granter items (set via MCP, tier order): Torch, Infinity Blade, Flintlock pistol, epic pump shotgun, legendary assault rifle. These are the only melee items in the project besides the Flag. Pirate boats as visuals are deferred.
+
 ## Architecture (proposed)
 
 All gameplay is in Verse, in a few small modules instead of one large device. This is the shape to build toward, not a contract.
@@ -89,7 +94,7 @@ Reference code in `C:\Users\lukeb\Documents\Fortnite Examples` that looks releva
 - Wood-to-weapons crafting, with the fire-or-weapons trade-off made visible in the HUD.
 - `pirate_system` (basic): pirate boats arrive, land, attack like zombies, and are removed at the end of the defend phase. Difficulty from the number of players who joined. The crew sees the pirate forecast before each round.
 - **Done when:** one full playable round works end to end, with 2 players and with 8+, and the difficulty feels fair at both.
-- **Checkpoint:** playtest the slice before building more. If the minute-long phases are too short or too long, tune now.
+- **Checkpoint:** playtest the slice before building more. If the 2-minute phases are too short or too long, tune now.
 
 ### M5: Food, pets and consequences
 - Food gathering and the "reduced health and performance" penalty.
@@ -123,7 +128,8 @@ Reference code in `C:\Users\lukeb\Documents\Fortnite Examples` that looks releva
 ## Decisions
 
 Decided (also in the README):
-- Docking deadline is 1 minute, then players are auto-placed at a landing spot.
+- Docking deadline is 2 minutes, then players are auto-placed at a landing spot.
+- Prepare and defend phases are 2 minutes each, and the round 10 final battle is 4 minutes (all raised on 2026-11-20 from 1, 1 and 3 minutes; the docking deadline from 1 to 2).
 - One coastal zone per job (water, wood, food, pets), with a landing bonus.
 - Pets are shared and never die. There are 8 bonuses, one species each. Donating a pet to an NPC reduces the crew's pet count.
 - 5 weapon tiers. The wood cost doubles each tier, and tier 3 and above are ranged weapons.
@@ -131,11 +137,11 @@ Decided (also in the README):
 - 8 NPCs wander the island and are present before players dock.
 - Round 10: a boss ship that only ranged weapons (tier 3+) can damage, plus a large pirate boss that toggles between the lowest-health player and the highest-damage player.
 
-Also decided: re-tinted wolf, boar and chicken fill the three remaining pet bonuses (assignment confirmed). Weapons never reset. The pirate boss toggles targeting every 15 seconds, and the final battle lasts 3 minutes. Surviving it wins the game and the bosses die when the timer ends.
+Also decided: re-tinted wolf, boar and chicken fill the three remaining pet bonuses (assignment confirmed). Weapons never reset. The pirate boss toggles targeting every 15 seconds, and the final battle lasts 4 minutes. Surviving it wins the game and the bosses die when the timer ends.
 
 AI budget (from P2): at most about 50 AI alive at once, inside UEFN's hard limit of 90. The crew's pets are capped at 12 in total, because every pet takes an AI slot, which leaves about 30 pirates alive at once. All in `game_config`, to recheck with 12 players in M8.
 
-Agreed starting values, still to tune in playtests (in `game_config`): harvest about 30 wood per minute per player, weapon tier costs 10, 20, 40, 80, 160.
+Agreed starting values, still to tune in playtests (in `game_config`): harvest about 30 wood per minute per player, weapon tier costs 16, 32, 64, 128, 260 (500 wood in total for tier 5; rescaled on 2026-11-20 for the 2-minute prepare phases).
 
 No design decisions are blocking. The NPC roster is agreed for now and can be changed by the designer later.
 
@@ -145,7 +151,7 @@ No design decisions are blocking. The NPC roster is agreed for now and can be ch
 |---|---|---|
 | Boat movement is hard or unreliable in UEFN | Intro phase and pirate boats both depend on it | Prototype first (P1), with the scripted voyage as the fallback. Pirate boats can be simpler than player boats |
 | Too many actors (12 players, pets, pirates, NPCs) | Frame rate drops | Prototype first (P2), cap counts, use `uefn-profiling`, and keep per-tick work out of Verse |
-| 1-minute rounds feel too rushed | Tasks can't be finished, so the loop feels bad | Keep every number in `game_config` and tune in the M4 playtest |
+| Phase length feels wrong (raised to 2 minutes; a full game is now about 45 minutes) | Tasks can't be finished, so the loop feels bad | Keep every number in `game_config` and tune in the M4 playtest |
 | The 2-player and 12-player experience diverge | Map is only fun at one size | Scale pirates from the number of players who joined, and test both sizes at M4 |
 | Pet cost curve is too punishing or too weak | The "selfish or coordinated" design doesn't land | Make the curve a config value and playtest it in M5 |
 | Taming needs custom logic: wildlife spawners make wild animals, not followers | Pets are the least-proven system | Prototype taming early in M5 (swap a wild animal for a follower NPC) and keep per-pet logic cheap |

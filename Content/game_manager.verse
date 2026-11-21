@@ -44,6 +44,30 @@ game_manager := class(creative_device):
     @editable
     EndGame : end_game_device = end_game_device{}
 
+    # The four coastal zones. Docking inside one gives that job's landing bonus.
+    @editable
+    WaterZone : landing_zone = landing_zone{}
+    @editable
+    WoodZone : landing_zone = landing_zone{}
+    @editable
+    FoodZone : landing_zone = landing_zone{}
+    @editable
+    PetsZone : landing_zone = landing_zone{}
+
+    # Pirates land from these two shore spawners during each defend phase.
+    @editable
+    PirateSpawnerA : guard_spawner_device = guard_spawner_device{}
+    @editable
+    PirateSpawnerB : guard_spawner_device = guard_spawner_device{}
+
+    # Holds the 5 weapon tiers as items 0 to 4 (tier 1 to tier 5).
+    @editable
+    WeaponGranter : item_granter_device = item_granter_device{}
+
+    # The visible fire at the camp. Lit while the fire has any heat, out at zero.
+    @editable
+    CampfireVisual : campfire_device = campfire_device{}
+
     # --- Test settings (leave at defaults for real play) ---
     # Multiplies every phase length. 0.1 runs a whole game in a few minutes.
     @editable
@@ -56,6 +80,7 @@ game_manager := class(creative_device):
     SimulateWipeAtRound : int = 0
 
     Stockpile<public> : resource_stockpile = resource_stockpile{}
+    Fire<public> : communal_fire = communal_fire{}
 
     var Phase : game_phase = game_phase.Intro
     var CurrentRound : int = 0
@@ -63,6 +88,13 @@ game_manager := class(creative_device):
     var Dead : [player]logic = map{}
     var Hud : [player]text_block = map{}
     var EliminationSubs : [player]cancelable = map{}
+    var LandingBonus : [player]resource_kind = map{}
+    var BonusGatherCount : [player]int = map{}
+    var WeaponTier : [player]int = map{}
+    var PlayersAtStart : int = 0
+    var PiratesAlive : int = 0
+    var Nightmares : logic = false
+    var FireShownLit : logic = true
 
     AllDeadEvent : event() = event(){}
 
@@ -76,19 +108,33 @@ game_manager := class(creative_device):
         for (Player : GetPlayspace().GetPlayers()):
             OnPlayerAdded(Player)
         Stockpile.ChangedEvent.Subscribe(UpdateHud)
+        PirateSpawnerA.SpawnedEvent.Subscribe(OnPirateSpawned)
+        PirateSpawnerB.SpawnedEvent.Subscribe(OnPirateSpawned)
+        PirateSpawnerA.EliminatedEvent.Subscribe(OnPirateEliminated)
+        PirateSpawnerB.EliminatedEvent.Subscribe(OnPirateEliminated)
+        PirateSpawnerA.Disable()
+        PirateSpawnerB.Disable()
 
         RunIntro()
+        AssignLandingBonuses()
+        set PlayersAtStart = GetPlayspace().GetPlayers().Length
 
         for (R := 1..game_config.TotalRounds):
             set CurrentRound = R
-            ReviveDead()
+            StartOfRound()
             Prepared := RunTimedPhase(game_phase.Prepare, game_config.PrepareSeconds)
             if (not Prepared?):
                 return EndMatch(game_phase.GameOver)
             if (R = SimulateWipeAtRound):
                 spawn{ SimulateWipe() }
             DefendSeconds := if (R = game_config.TotalRounds) then game_config.FinalDefendSeconds else game_config.DefendSeconds
-            Defended := RunTimedPhase(game_phase.Defend, DefendSeconds)
+            Defended := race:
+                RunTimedPhase(game_phase.Defend, DefendSeconds)
+                block:
+                    LandPirates(PiratesThisRound())
+                    Sleep(Inf)
+                    false
+            ClearPirates()
             if (not Defended?):
                 return EndMatch(game_phase.GameOver)
             if (R < game_config.TotalRounds):
@@ -138,6 +184,9 @@ game_manager := class(creative_device):
             Sleep(1.0)
             set SecondsLeft -= 1.0
             set Tick += 1
+            if (Phase = game_phase.Prepare or Phase = game_phase.Defend):
+                Fire.Cool(1.0)
+                ShowFire()
             if (FakeHarvest?, Phase = game_phase.Prepare):
                 AddFakeResources(Tick)
 
@@ -208,8 +257,33 @@ game_manager := class(creative_device):
         Log("every player is dead")
         AllDeadEvent.Signal()
 
+    # The fire decides the start of each round: a warm fire revives last round's dead,
+    # and a cold one gives the crew nightmares (lower max health) for this round.
+    StartOfRound():void =
+        if (Fire.CanRevive[]):
+            ReviveDead()
+        else if (CurrentRound > 1):
+            Log("fire too cold to revive the fallen")
+        set Nightmares = if (CurrentRound > 1, Fire.CausesNightmares[]) then true else false
+        if (Nightmares?):
+            Log("the fire is too low: nightmares this round")
+        ApplyMaxHealth()
+        # Revived characters take a moment to exist again, so apply once more shortly after.
+        spawn{ ApplyMaxHealthSoon() }
+
+    ApplyMaxHealthSoon()<suspends>:void =
+        Sleep(1.5)
+        ApplyMaxHealth()
+
+    ApplyMaxHealth():void =
+        MaxHealth := if (Nightmares?) then game_config.NightmareMaxHealth else game_config.NormalMaxHealth
+        for (Player : GetPlayspace().GetPlayers(), not IsDead[Player], Character := Player.GetFortCharacter[]):
+            Character.SetMaxHealth(MaxHealth)
+            if (Character.GetHealth() > MaxHealth):
+                Character.SetHealth(MaxHealth)
+        UpdateHud()
+
     # Brings back everyone who died last round, at the landing spot.
-    # M4 will make this depend on the fire's heat; for now everyone revives.
     ReviveDead():void =
         Spot := LandingSpot.GetTransform()
         for (Player -> IsPlayerDead : Dead, IsPlayerDead?):
@@ -240,6 +314,139 @@ game_manager := class(creative_device):
         Players.Length > 0
         for (Player : Players):
             Fleet.IsDocked[Player]
+
+    # --- Landing bonus and harvesting ---
+
+    # Gives each player the job of the zone their boat docked in. Players placed ashore
+    # by the deadline, or who docked outside every zone, get no bonus.
+    AssignLandingBonuses():void =
+        for (Player : GetPlayspace().GetPlayers()):
+            if (Position := Fleet.GetDockPosition[Player]):
+                if (Zone := ZoneAt[Position], set LandingBonus[Player] = Zone.GetKind()):
+                    Log("landing bonus: {KindName(Zone.GetKind())} (docked at {Position.X}, {Position.Y})")
+                else:
+                    Log("landing bonus: none (docked outside every zone at {Position.X}, {Position.Y})")
+            else:
+                Log("landing bonus: none (placed ashore by the deadline)")
+        UpdateHud()
+
+    ZoneAt(Position:vector3)<transacts><decides>:landing_zone =
+        var Found : ?landing_zone = false
+        for (Zone : array{WaterZone, WoodZone, FoodZone, PetsZone}, not Found?, Zone.Contains[Position]):
+            set Found = option{Zone}
+        Found?
+
+    # Called by harvest nodes. Gathering only counts during Prepare and for living players.
+    # Returns how many units were added to the stockpile (0 if the gather didn't count).
+    Harvest<public>(Agent:agent, Kind:resource_kind):int =
+        if (Player := player[Agent], Phase = game_phase.Prepare, not IsDead[Player]):
+            var Amount : int = game_config.HarvestYield
+            if (LandingBonus[Player] = Kind):
+                var Count : int = 0
+                if (Previous := BonusGatherCount[Player]):
+                    set Count = Previous
+                set Count += 1
+                if (set BonusGatherCount[Player] = Count) {}
+                if (Mod[Count, game_config.LandingBonusEveryNth] = 0):
+                    set Amount += 1
+            Stockpile.Add(Kind, Amount)
+            Log("harvest: +{Amount} {KindName(Kind)}, stockpile now {Stockpile.Get(Kind)}")
+            Amount
+        else:
+            Log("harvest: {KindName(Kind)} ignored in {PhaseTitle(Phase)}")
+            0
+
+    KindName(Kind:resource_kind)<computes>:string =
+        case (Kind):
+            resource_kind.Water => "Water"
+            resource_kind.Wood => "Wood"
+            resource_kind.Food => "Food"
+            resource_kind.Pets => "Pets"
+
+    # --- Fire and weapons (called by camp stations) ---
+
+    FeedFire<public>(Agent:agent):void =
+        if (not player[Agent]):
+            return
+        if (Fire.IsFull[]):
+            Log("fire: already at full heat")
+            return
+        Paid := Stockpile.TrySpend(resource_kind.Wood, game_config.FireWoodPerFeed)
+        if (Paid?):
+            Fire.AddFeed()
+            ShowFire()
+            Log("fire: fed, {Fire.Summary()}")
+            UpdateHud()
+        else:
+            Log("fire: not enough wood to feed")
+
+    # Keeps the visible campfire in step with the heat (only calls the device on a change).
+    ShowFire():void =
+        ShouldBeLit := if (Fire.GetHeat() > 0.0) then true else false
+        # The device needs an agent for lighting; any player will do.
+        if (ShouldBeLit <> FireShownLit, Someone := GetPlayspace().GetPlayers()[0]):
+            if (ShouldBeLit?) then CampfireVisual.Light(Someone) else CampfireVisual.Extinguish(Someone)
+            set FireShownLit = ShouldBeLit
+
+    # Spends the crew's wood on the next weapon tier for this player.
+    UpgradeWeapon<public>(Agent:agent):void =
+        if (Player := player[Agent], not IsDead[Player]):
+            Current := CurrentTier(Player)
+            if (Cost := game_config.WeaponTierCosts[Current]):
+                Paid := Stockpile.TrySpend(resource_kind.Wood, Cost)
+                if (Paid?):
+                    WeaponGranter.GrantItemIndex(Agent, Current)
+                    if (set WeaponTier[Player] = Current + 1) {}
+                    Log("weapons: a player upgraded to tier {Current + 1} for {Cost} wood")
+                    UpdateHud()
+                else:
+                    Log("weapons: tier {Current + 1} needs {Cost} wood")
+            else:
+                Log("weapons: already at the top tier")
+
+    # Tiers already owned (0 = none yet, 5 = top).
+    CurrentTier(Player:player)<transacts>:int =
+        if (Tier := WeaponTier[Player]) then Tier else 0
+
+    WeaponLine(Player:player)<transacts>:string =
+        Tier := CurrentTier(Player)
+        if (Cost := game_config.WeaponTierCosts[Tier]):
+            "Weapon tier {Tier}   Next tier: {Cost} wood"
+        else:
+            "Weapon tier {Tier} (top tier)"
+
+    # --- Pirates ---
+
+    PiratesThisRound()<transacts>:int =
+        Wanted := game_config.PirateBase + game_config.PiratesPerPlayer * PlayersAtStart + game_config.PiratesPerRound * (CurrentRound - 1)
+        Min(Wanted, game_config.MaxAlivePirates)
+
+    # Lands Count pirates, alternating between the two shore spawners.
+    LandPirates(Count:int)<suspends>:void =
+        Log("pirates: {Count} landing in round {CurrentRound}")
+        PirateSpawnerA.Enable()
+        PirateSpawnerB.Enable()
+        for (Index := 0..Count - 1):
+            if (Mod[Index, 2] = 0) then PirateSpawnerA.Spawn() else PirateSpawnerB.Spawn()
+            Sleep(game_config.PirateSpawnIntervalSeconds)
+
+    # Removes every pirate still alive when the defend phase ends.
+    ClearPirates():void =
+        PirateSpawnerA.Disable()
+        PirateSpawnerB.Disable()
+        if (PiratesAlive > 0):
+            Log("pirates: {PiratesAlive} left at the end of the phase, removed")
+        set PiratesAlive = 0
+        UpdateHud()
+
+    OnPirateSpawned(Agent:agent):void =
+        set PiratesAlive += 1
+        UpdateHud()
+
+    OnPirateEliminated(Result:device_ai_interaction_result):void =
+        if (PiratesAlive > 0):
+            set PiratesAlive -= 1
+        UpdateHud()
 
     # --- Test data ---
 
@@ -280,10 +487,20 @@ game_manager := class(creative_device):
     UpdateHud():void =
         Header := HeaderLine()
         Resources := Stockpile.Summary()
+        FireLine := Fire.Summary()
+        var PirateLine : string = ""
+        if (Phase = game_phase.Prepare):
+            set PirateLine = "\nIncoming this round: {PiratesThisRound()} pirates"
+        else if (Phase = game_phase.Defend):
+            set PirateLine = "\nPirates ashore: {PiratesAlive}"
         for (Player -> Text : Hud):
-            var Lines : string = "{Header}\n{Resources}"
+            var Lines : string = "{Header}\n{Resources}\n{FireLine}{PirateLine}\n{WeaponLine(Player)}"
+            if (Bonus := LandingBonus[Player]):
+                set Lines += "\nLanding bonus: {KindName(Bonus)} gathering x1.5"
+            if (Nightmares?):
+                set Lines += "\nNightmares: the fire burned low (max health {Int[game_config.NightmareMaxHealth] or 70})"
             if (IsDead[Player]):
-                set Lines += "\nYou are down. Spectating until next round."
+                set Lines += "\nYou are down. You revive next round if the fire is warm."
             Text.SetText(HudMessage(Lines))
 
     HeaderLine()<transacts>:string =
