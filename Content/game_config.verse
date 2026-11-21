@@ -6,10 +6,10 @@ game_config<public> := module:
 
     # --- Rounds and phases ---
     TotalRounds<public>:int = 10
-    DockingDeadlineSeconds<public>:float = 60.0
+    DockingDeadlineSeconds<public>:float = 120.0
     PrepareSeconds<public>:float = 120.0
     DefendSeconds<public>:float = 120.0
-    FinalDefendSeconds<public>:float = 180.0
+    FinalDefendSeconds<public>:float = 240.0
     # Short pause after each defend phase before the next prepare phase.
     ResultSeconds<public>:float = 5.0
     # How long the win or lose screen shows before the game ends.

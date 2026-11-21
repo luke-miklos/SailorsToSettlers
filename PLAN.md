@@ -126,8 +126,8 @@ Reference code in `C:\Users\lukeb\Documents\Fortnite Examples` that looks releva
 ## Decisions
 
 Decided (also in the README):
-- Docking deadline is 1 minute, then players are auto-placed at a landing spot.
-- Prepare and defend phases are 2 minutes each (raised from 1 minute on 2026-11-20). The round 10 final battle stays at 3 minutes.
+- Docking deadline is 2 minutes, then players are auto-placed at a landing spot.
+- Prepare and defend phases are 2 minutes each, and the round 10 final battle is 4 minutes (all raised on 2026-11-20 from 1, 1 and 3 minutes; the docking deadline from 1 to 2).
 - One coastal zone per job (water, wood, food, pets), with a landing bonus.
 - Pets are shared and never die. There are 8 bonuses, one species each. Donating a pet to an NPC reduces the crew's pet count.
 - 5 weapon tiers. The wood cost doubles each tier, and tier 3 and above are ranged weapons.
@@ -135,7 +135,7 @@ Decided (also in the README):
 - 8 NPCs wander the island and are present before players dock.
 - Round 10: a boss ship that only ranged weapons (tier 3+) can damage, plus a large pirate boss that toggles between the lowest-health player and the highest-damage player.
 
-Also decided: re-tinted wolf, boar and chicken fill the three remaining pet bonuses (assignment confirmed). Weapons never reset. The pirate boss toggles targeting every 15 seconds, and the final battle lasts 3 minutes. Surviving it wins the game and the bosses die when the timer ends.
+Also decided: re-tinted wolf, boar and chicken fill the three remaining pet bonuses (assignment confirmed). Weapons never reset. The pirate boss toggles targeting every 15 seconds, and the final battle lasts 4 minutes. Surviving it wins the game and the bosses die when the timer ends.
 
 AI budget (from P2): at most about 50 AI alive at once, inside UEFN's hard limit of 90. The crew's pets are capped at 12 in total, because every pet takes an AI slot, which leaves about 30 pirates alive at once. All in `game_config`, to recheck with 12 players in M8.
 
@@ -149,7 +149,7 @@ No design decisions are blocking. The NPC roster is agreed for now and can be ch
 |---|---|---|
 | Boat movement is hard or unreliable in UEFN | Intro phase and pirate boats both depend on it | Prototype first (P1), with the scripted voyage as the fallback. Pirate boats can be simpler than player boats |
 | Too many actors (12 players, pets, pirates, NPCs) | Frame rate drops | Prototype first (P2), cap counts, use `uefn-profiling`, and keep per-tick work out of Verse |
-| Phase length feels wrong (raised to 2 minutes; a full game is now about 43 minutes) | Tasks can't be finished, so the loop feels bad | Keep every number in `game_config` and tune in the M4 playtest |
+| Phase length feels wrong (raised to 2 minutes; a full game is now about 45 minutes) | Tasks can't be finished, so the loop feels bad | Keep every number in `game_config` and tune in the M4 playtest |
 | The 2-player and 12-player experience diverge | Map is only fun at one size | Scale pirates from the number of players who joined, and test both sizes at M4 |
 | Pet cost curve is too punishing or too weak | The "selfish or coordinated" design doesn't land | Make the curve a config value and playtest it in M5 |
 | Taming needs custom logic: wildlife spawners make wild animals, not followers | Pets are the least-proven system | Prototype taming early in M5 (swap a wild animal for a follower NPC) and keep per-pet logic cheap |
