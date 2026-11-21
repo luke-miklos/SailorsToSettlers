@@ -139,7 +139,7 @@ Also decided: re-tinted wolf, boar and chicken fill the three remaining pet bonu
 
 AI budget (from P2): at most about 50 AI alive at once, inside UEFN's hard limit of 90. The crew's pets are capped at 12 in total, because every pet takes an AI slot, which leaves about 30 pirates alive at once. All in `game_config`, to recheck with 12 players in M8.
 
-Agreed starting values, still to tune in playtests (in `game_config`): harvest about 30 wood per minute per player, weapon tier costs 10, 20, 40, 80, 160.
+Agreed starting values, still to tune in playtests (in `game_config`): harvest about 30 wood per minute per player, weapon tier costs 16, 32, 64, 128, 260 (500 wood in total for tier 5; rescaled on 2026-11-20 for the 2-minute prepare phases).
 
 No design decisions are blocking. The NPC roster is agreed for now and can be changed by the designer later.
 

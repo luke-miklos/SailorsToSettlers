@@ -17,8 +17,9 @@ game_config<public> := module:
 
     # --- Wood economy ---
     BaseWoodPerMinute<public>:float = 30.0
-    # Wood cost of each weapon tier (index 0 = tier 1). Doubles each tier.
-    WeaponTierCosts<public>:[]int = array{10, 20, 40, 80, 160}
+    # Wood cost of each weapon tier (index 0 = tier 1). Roughly doubles each tier;
+    # reaching tier 5 costs 500 wood in total (tier 5 rounded up from 256 to hit 500).
+    WeaponTierCosts<public>:[]int = array{16, 32, 64, 128, 260}
     # Tier 3 and above are ranged weapons and can damage the boss ship.
     FirstRangedWeaponTier<public>:int = 3
 

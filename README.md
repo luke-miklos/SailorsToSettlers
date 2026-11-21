@@ -29,8 +29,8 @@ Phases 2 and 3 repeat 10 times with increasing difficulty and higher stakes. Pha
 ### Wood economy (agreed starting values, to tune in playtests)
 
 - A player with no bonuses harvests about **30 wood per minute**. Landing in the wood zone and the wood-harvesting pet raise this (suggested +25% to +50% each).
-- Weapon tier costs double: **10, 20, 40, 80, 160 wood** for tiers 1 to 5. Reaching tier 5 costs 310 wood in total, which is about 10 minutes of harvesting with no bonuses, or essentially all 10 prepare phases.
-- Tier 3 (70 wood in total) takes about 2.3 minutes of harvesting, and tier 4 (150 wood) takes 5 minutes. That leaves room for fire, which also needs wood.
+- Weapon tier costs roughly double: **16, 32, 64, 128, 260 wood** for tiers 1 to 5. Reaching tier 5 costs 500 wood in total, which is about 17 minutes of harvesting with no bonuses, out of the 20 minutes of prepare time in a game (10 phases of 2 minutes).
+- Tier 3 (112 wood in total) takes about 3.7 minutes of harvesting, and tier 4 (240 wood) takes 8 minutes. That leaves room for fire, which also needs wood.
 
 ### Ending
 - **Win:** survive round 10. The final attack includes a boss ship that the crew must fire at, plus a large pirate boss who lands on the island with the final wave. The round 10 battle lasts 4 minutes, longer than the normal 2-minute defend phase. If the crew survives the 4 minutes, they win, and the boss and boss ship die when the timer ends, just as ordinary pirates do.
@@ -109,7 +109,7 @@ Pet donation (Dolly) uses one of the crew's tamed pets, so it competes with the 
 - Roles or classes: none
 - NPCs: the 8 listed below, two per resource (one communal-level, one donation). Fire is not an NPC want
 - Pet re-tints: green-brown boar (wood), gold chicken (cheaper taming), steel-grey wolf (cheaper weapon crafting)
-- Wood economy: 30 wood per minute base harvest, and weapon tiers cost 10, 20, 40, 80, 160
+- Wood economy: 30 wood per minute base harvest, and weapon tiers cost 16, 32, 64, 128, 260 (500 in total for tier 5)
 - Combat: PvE only, with pirates landing from boats during every defend phase
 - Phases: timer-only, with no early ending
 - Players who haven't docked by a deadline are auto-placed at a landing spot
