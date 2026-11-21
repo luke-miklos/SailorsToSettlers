@@ -20,8 +20,9 @@ game_config<public> := module:
     # Wood cost of each weapon tier (index 0 = tier 1). Roughly doubles each tier;
     # reaching tier 5 costs 500 wood in total (tier 5 rounded up from 256 to hit 500).
     WeaponTierCosts<public>:[]int = array{16, 32, 64, 128, 260}
-    # Tier 3 and above are ranged weapons and can damage the boss ship.
-    FirstRangedWeaponTier<public>:int = 3
+    # Tier 1 is the Infinity Blade (everyone also starts with a pickaxe); tier 2 and
+    # above are ranged weapons and can damage the boss ship.
+    FirstRangedWeaponTier<public>:int = 2
 
     # --- Harvesting and landing bonus ---
     # Units gained per completed gather (the button hold time sets the pace).
