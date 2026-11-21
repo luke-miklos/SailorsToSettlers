@@ -203,6 +203,8 @@ game_manager := class(creative_device):
             return
         for (Player : Players, not IsDead[Player]):
             return
+        # Note: with Spawn Limit 1, Fortnite itself ends the match when the last player
+        # is eliminated, so the end screen may be cut short. Accepted for now.
         Log("every player is dead")
         AllDeadEvent.Signal()
 
