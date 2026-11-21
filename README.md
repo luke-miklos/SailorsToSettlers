@@ -21,10 +21,10 @@ The game moves forward for all players together.
 | Phase | Player role | Length | Focus |
 |---|---|---|---|
 | 1. Castaways (intro) | Sailors | until docked | Sail your own boat (simple, easy controls) and explore to find a place to dock. The moment your boat touches land you are **docked** and your intro is over. Your landing spot gives you an advantage in one core job (for example landing near a spring helps with water). |
-| 2. Settlers (prepare) | Settlers | 1 minute | Scavenge the shore, find and harvest water, harvest wood and make fire, turn local fauna into food or pets, find local flora for food, craft stronger weapons (takes wood). |
-| 3. Defenders (defend) | Defenders | 1 minute | Defend the island from pirates! Pirates land in groups from boats and attack like zombies. More boats come in each successive defend phase. Any pirates still alive when the minute ends are removed. |
+| 2. Settlers (prepare) | Settlers | 2 minutes | Scavenge the shore, find and harvest water, harvest wood and make fire, turn local fauna into food or pets, find local flora for food, craft stronger weapons (takes wood). |
+| 3. Defenders (defend) | Defenders | 2 minutes | Defend the island from pirates! Pirates land in groups from boats and attack like zombies. More boats come in each successive defend phase. Any pirates still alive when the phase ends are removed. |
 
-Phases 2 and 3 repeat 10 times with increasing difficulty and higher stakes. Phases are timer-only: each ends when its timer runs out, and nothing can end a phase early. The 1-minute timers are a starting point to tune. Players who haven't docked 1 minute after the voyage begins are automatically placed at a landing spot.
+Phases 2 and 3 repeat 10 times with increasing difficulty and higher stakes. Phases are timer-only: each ends when its timer runs out, and nothing can end a phase early. The 2-minute timers (raised from 1 minute after the first playtests) are a starting point to tune. Players who haven't docked 1 minute after the voyage begins are automatically placed at a landing spot.
 
 ### Wood economy (agreed starting values, to tune in playtests)
 
@@ -33,7 +33,7 @@ Phases 2 and 3 repeat 10 times with increasing difficulty and higher stakes. Pha
 - Tier 3 (70 wood in total) takes about 2.3 minutes of harvesting, and tier 4 (150 wood) takes 5 minutes. That leaves room for fire, which also needs wood.
 
 ### Ending
-- **Win:** survive round 10. The final attack includes a boss ship that the crew must fire at, plus a large pirate boss who lands on the island with the final wave. The round 10 battle lasts 3 minutes, longer than the normal 1-minute defend phase. If the crew survives the 3 minutes, they win, and the boss and boss ship die when the timer ends, just as ordinary pirates do.
+- **Win:** survive round 10. The final attack includes a boss ship that the crew must fire at, plus a large pirate boss who lands on the island with the final wave. The round 10 battle lasts 3 minutes, longer than the normal 2-minute defend phase. If the crew survives the 3 minutes, they win, and the boss and boss ship die when the timer ends, just as ordinary pirates do.
 - **Lose:** every player dies at the same time. This is an instant game over.
 
 ## Core loop
