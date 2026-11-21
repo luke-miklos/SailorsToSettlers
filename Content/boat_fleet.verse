@@ -1,5 +1,6 @@
 using { /Fortnite.com/Devices }
 using { /Fortnite.com/Vehicles }
+using { /Fortnite.com/Characters }
 using { /Verse.org/Simulation }
 using { /UnrealEngine.com/Temporary/Diagnostics }
 
@@ -93,6 +94,9 @@ boat_fleet := class(creative_device):
             if (Player.IsActive[]):
                 break
             Sleep(0.25)
+        if (Character := Player.GetFortCharacter[]):
+            Start := Character.GetTransform().Translation
+            Print("boat_fleet: player {Index} first appeared at ({Start.X}, {Start.Y}, {Start.Z})")
         Sleep(1.0)
         Boat.AssignDriver(Player)
         Print("boat_fleet: player {Index} seated in boat {Index}")
