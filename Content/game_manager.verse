@@ -93,6 +93,7 @@ game_manager := class(creative_device):
     var WeaponTier : [player]int = map{}
     var PlayersAtStart : int = 0
     var PiratesAlive : int = 0
+    var PiratesLanded : int = 0
     var Nightmares : logic = false
     var FireShownLit : logic = true
 
@@ -128,12 +129,13 @@ game_manager := class(creative_device):
             if (R = SimulateWipeAtRound):
                 spawn{ SimulateWipe() }
             DefendSeconds := if (R = game_config.TotalRounds) then game_config.FinalDefendSeconds else game_config.DefendSeconds
+            # The defend phase ends when its timer runs out, when every pirate is
+            # dead (early win), or when every player is dead (RunTimedPhase gives false).
             Defended := race:
                 RunTimedPhase(game_phase.Defend, DefendSeconds)
                 block:
-                    LandPirates(PiratesThisRound())
-                    Sleep(Inf)
-                    false
+                    LandAndDefeatPirates()
+                    true
             ClearPirates()
             if (not Defended?):
                 return EndMatch(game_phase.GameOver)
@@ -421,14 +423,30 @@ game_manager := class(creative_device):
         Wanted := game_config.PirateBase + game_config.PiratesPerPlayer * PlayersAtStart + game_config.PiratesPerRound * (CurrentRound - 1)
         Min(Wanted, game_config.MaxAlivePirates)
 
-    # Lands Count pirates, alternating between the two shore spawners.
+    # Lands Count pirates, alternating between the two shore spawners. Enabling a
+    # spawner lands one pirate by itself, so this counts real spawns (PiratesLanded)
+    # and only calls Spawn() until Count have landed.
     LandPirates(Count:int)<suspends>:void =
         Log("pirates: {Count} landing in round {CurrentRound}")
+        set PiratesLanded = 0
         PirateSpawnerA.Enable()
         PirateSpawnerB.Enable()
-        for (Index := 0..Count - 1):
-            if (Mod[Index, 2] = 0) then PirateSpawnerA.Spawn() else PirateSpawnerB.Spawn()
+        var Index : int = 0
+        loop:
             Sleep(game_config.PirateSpawnIntervalSeconds)
+            if (PiratesLanded >= Count):
+                break
+            if (Mod[Index, 2] = 0) then PirateSpawnerA.Spawn() else PirateSpawnerB.Spawn()
+            set Index += 1
+
+    # Lands this round's pirates, then returns once every one of them is dead.
+    LandAndDefeatPirates()<suspends>:void =
+        LandPirates(PiratesThisRound())
+        loop:
+            if (PiratesAlive <= 0):
+                Log("pirates: all {PiratesLanded} defeated, defend phase ends early")
+                break
+            Sleep(0.5)
 
     # Removes every pirate still alive when the defend phase ends.
     ClearPirates():void =
@@ -441,6 +459,7 @@ game_manager := class(creative_device):
 
     OnPirateSpawned(Agent:agent):void =
         set PiratesAlive += 1
+        set PiratesLanded += 1
         UpdateHud()
 
     OnPirateEliminated(Result:device_ai_interaction_result):void =
